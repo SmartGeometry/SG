@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:gravity="center_horizontal">
+<ImageButton
+	android:id="@+id/vertical_line"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/vertical_line"
+	/>
+<ImageButton
+    android:id="@+id/midline"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/midline"
+	/>
+<ImageButton
+    android:id="@+id/angle_bisector"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/angle_bisector"
+	/>
+<ImageButton
+    android:id="@+id/command_line"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/command_line"
+	/>
+    </LinearLayout>

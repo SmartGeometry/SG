@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:gravity="center_horizontal">
+<ImageButton
+	android:id="@+id/parallelogram"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/parallelogram"
+	/>
+<ImageButton
+    android:id="@+id/rect"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/rect"
+	/>
+<ImageButton
+    android:id="@+id/squre"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/squre"
+	/>
+<ImageButton
+    android:id="@+id/diamond"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/diamond"
+	/>
+<ImageButton
+    android:id="@+id/trapezoid"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/trapezoid"
+	/>
+<ImageButton
+    android:id="@+id/right_trap"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/right_trap"
+	/>
+<ImageButton
+    android:id="@+id/isosceles_trap"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:src = "@drawable/isosceles_trap"
+	/>
+    </LinearLayout>
