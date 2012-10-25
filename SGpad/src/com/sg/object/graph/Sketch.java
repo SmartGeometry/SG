@@ -4,9 +4,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sg.logic.common.CommonFunc;
 import com.sg.object.Point;
 import com.sg.object.unit.GUnit;
 import com.sg.property.common.GType;
+import com.sg.property.common.ThresholdProperty;
 import com.sg.property.tools.Painter;
 
 import android.graphics.Canvas;
@@ -43,6 +45,13 @@ public class Sketch extends Graph implements Serializable{
 	@Override
 	public boolean isInGraph(Point point) {
 		// TODO Auto-generated method stub
+		double curDistance;
+		for(Point pt : pList) {
+			curDistance = CommonFunc.distance(pt, point);
+			if(curDistance < ThresholdProperty.GRAPH_CHECKED_DISTANCE) {
+				return true;
+			}
+		}
 		return false;
 	}
 

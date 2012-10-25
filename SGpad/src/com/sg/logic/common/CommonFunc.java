@@ -10,6 +10,19 @@ import com.sg.object.unit.PointUnit;
 
 public class CommonFunc {
 	
+	private static int DriverWidth;
+	private static int DriverHeight;
+	public static void setDriverBound(int w, int h) {
+		DriverWidth = w;
+		DriverHeight = h;
+	}
+	public static int getDriverWidth() {
+		return DriverWidth;
+	}
+	public static int getDriverHeight() {
+		return DriverHeight;
+	}
+	
 	public static double distance(Point info1, Point info2) {
 		float X = info1.getX() - info2.getX();
 		float Y = info1.getY() - info2.getY();
@@ -76,9 +89,9 @@ public class CommonFunc {
 		double z = changeVector1.getY() * changeVector2.getX() - changeVector1.getX() * changeVector2.getY() ;
 		Log.v("z",z+"");
 		if( z > 0)
-			return false;
-		else
 			return true;
+		else
+			return false;
 /*
 		double k1 = ( 1.0 * changeVector1.getY() ) / ( 1.0 * changeVector1.getX() );
 		double k2 = ( 1.0 * changeVector2.getY() ) / ( 1.0 * changeVector2.getX() );
@@ -103,5 +116,15 @@ public class CommonFunc {
 		float y = (float) ((y1 - y2) / n + y2);
 		return new Point(x, y);
 	}
+	
+	// 求3个点的曲率半径
+		public static double CurvatureRadius(Point p1, Point p2, Point p3) {
+			double a = distance(p1, p2);
+			double b = distance(p1, p3);
+			double c = distance(p2, p3);
+			double cosA = (b*b + c*c - a*a) / (2*b*c);
+			// 正弦定理 a/sinA = b/sinB = c/sinC = 2R
+			return 0.5 * a / Math.sin(Math.acos(cosA));
+		}
 
 }

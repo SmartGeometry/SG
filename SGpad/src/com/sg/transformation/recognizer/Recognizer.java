@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.sg.logic.common.CommonFunc;
 import com.sg.object.Point;
+import com.sg.object.graph.CurveGraph;
 import com.sg.object.graph.Graph;
 import com.sg.object.graph.LineGraph;
 import com.sg.object.graph.PointGraph;
@@ -58,12 +59,21 @@ public class Recognizer {
 			return graph;
 		}
 		
+//		unit = new CurveUnit(pList);
+//		if(unit.judge(pList)){
+//			graph = new CurveGraph(pList);
+//			return graph;
+//		}
 		
 		rebuildUnit(pList);
+		if(isSketch(unitList)) {
+			return null;
+		}
 		if(isLineGraph(unitList)){
 			graph = rebuileLineGraph(pList);
 		}else{
-			
+			graph = new CurveGraph();
+			((CurveGraph)graph).bulidCurveGraph(unitList);
 		}
 		return graph;
 		/*
@@ -112,7 +122,10 @@ public class Recognizer {
 		if(tmpLength / totalLength >= 0.95) {
 			unit = new LineUnit(pList);
 		} else {                 //若也不是直线图元，则判定为曲线图元
-			unit = new CurveUnit();
+			unit = new CurveUnit(pList);
+			if(!unit.judge(pList)){
+				return null;   //是草图
+			}
 		}
 		
 		return unit;
@@ -126,6 +139,16 @@ public class Recognizer {
 			}
 		}
 		return true;
+	}
+	
+	//是否是草图
+	private boolean isSketch(List<GUnit> unitList) {
+		for(GUnit unit : unitList) {
+			if(unit == null){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	//重构于直线构成的图形

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import com.sg.object.Point;
+import com.sg.object.graph.Graph;
 import com.sg.property.tools.Painter;
 
 import android.graphics.Canvas;
@@ -53,6 +54,12 @@ public abstract class GUnit implements Cloneable, Serializable{
 	}
 	
 	public abstract boolean isInUnit(Point point);
+	
+	public abstract void translate(float[][] transMatrix);
+	
+	public abstract void scale(float[][] scaleMatrix, Point translationCenter);
+	
+	public abstract void rotate(float[][] rotateMatrix, Point translationCenter);
 	
 	public GUnit clone(){
 		GUnit temp = null;  

@@ -139,38 +139,48 @@ public class TriangleGraph extends Graph implements Serializable{
 		
 	}
 
-	public void setVer(int i){
-		Vertical[i]=false;
+	public void setVer(int i, boolean state){
+		Vertical[i]=state;
 	}
 	
 	public boolean getVer(int i){
 		return Vertical[i];
 	}
 	
-	public void setMedian(int i){
-		Median[i]=false;
+	public void setMedian(int i, boolean state){
+		Median[i]=state;
 	}
 	
 	public boolean getMedian(int i){
 		return Median[i];
 	}
 	
-	public void setAngular(int i){
-		Angular[i]=false;
+	public void setAngular(int i, boolean state){
+		Angular[i]=state;
 	}
 	
 	public boolean getAngular(int i){
 		return Angular[i];
 	}
 	
-	public void setMid(int i){
-		Mid[i]=false;
+	public void setMid(int i, boolean state){
+		Mid[i]=state;
 	}
 	
 	public boolean getMid(int i){
 		return Mid[i];
 	}
 	
+	@Override
+	public Graph clone() {
+		Graph temp = null; 
+		temp = super.clone();
+		((TriangleGraph)temp).Vertical = Vertical.clone();
+		((TriangleGraph)temp).Angular = Angular.clone();
+		((TriangleGraph)temp).Median = Median.clone();
+		((TriangleGraph)temp).Mid = Mid.clone();
+		return temp;
+	}
 	/*
 	@Override
 	public boolean isInGraph(Point point) {

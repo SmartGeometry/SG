@@ -27,7 +27,7 @@ public class LineUnit extends GUnit implements Serializable{
 	 *        2.中位线
 	 *        3.角平分线
 	 *        4.中线
-	 *        5.约束线
+	 *        5.一般约束线
 	 *Ver用于记录约束线与三角形相交的顶点，数值有0,2,4；
 	 *startPoint 约定储存顶点，endPoint约定储存约束线的脚（如垂足） 
 	*/	
@@ -35,9 +35,10 @@ public class LineUnit extends GUnit implements Serializable{
 	private int Type = 0;
 	private int Ver ;
 	private double proportion;    //对于普通约束直线的约束比例
+	private boolean isDrag;
 	
 	public LineUnit() {
-
+		isDrag = false;
 	}
 
 //	public LineUnit(Point startPoint, Point endPoint) {
@@ -49,12 +50,14 @@ public class LineUnit extends GUnit implements Serializable{
 		this.startPointUnit = new PointUnit(pList.get(0));
 		this.endPointUnit = new PointUnit(pList.get(pList.size() - 1));
 		increaseDegree();
+		isDrag = false;
 	}
 	
 	public LineUnit(PointUnit startPointUnit, PointUnit endPointUnit) {
 		this.startPointUnit = startPointUnit;
 		this.endPointUnit = endPointUnit;
 		increaseDegree();
+		isDrag = false;
 	}
 	
 	private void increaseDegree() {
@@ -207,6 +210,35 @@ public class LineUnit extends GUnit implements Serializable{
 	
 	public double getProportion(){
 		return proportion;
+	}
+
+	public boolean isDrag() {
+		return isDrag;
+	}
+
+	public void setDrag(boolean isDrag) {
+		this.isDrag = isDrag;
+	}
+
+	@Override
+	public void translate(float[][] transMatrix) {
+		// TODO Auto-generated method stub
+		startPointUnit.translate(transMatrix);
+		endPointUnit.translate(transMatrix);
+	}
+
+	@Override
+	public void scale(float[][] scaleMatrix, Point translationCenter) {
+		// TODO Auto-generated method stub
+		startPointUnit.scale(scaleMatrix, translationCenter);
+		endPointUnit.scale(scaleMatrix, translationCenter);
+	}
+
+	@Override
+	public void rotate(float[][] rotateMatrix, Point translationCenter) {
+		// TODO Auto-generated method stub
+		startPointUnit.rotate(rotateMatrix, translationCenter);
+		endPointUnit.rotate(rotateMatrix, translationCenter);
 	}
 	
 }

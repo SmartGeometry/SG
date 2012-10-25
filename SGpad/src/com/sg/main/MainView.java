@@ -11,11 +11,14 @@ import com.sg.control.UndoRedoSolver;
 import com.sg.control.UndoRedoStruct;
 import com.sg.logic.common.CommonFunc;
 import com.sg.logic.common.VectorFunc;
+import com.sg.logic.strategy.LineStrategy;
 import com.sg.object.Point;
 import com.sg.object.graph.Sketch;
 import com.sg.object.graph.Graph;
+import com.sg.object.graph.TriangleGraph;
 import com.sg.object.unit.GUnit;
 import com.sg.object.unit.PointUnit;
+import com.sg.object.unit.CurveUnit;
 import com.sg.property.R;
 import com.sg.property.common.ThresholdProperty;
 import com.sg.property.tools.Painter;
@@ -23,22 +26,18 @@ import com.sg.transformation.collection.PenInfo;
 import com.sg.transformation.collection.PenInfoCollector;
 import com.sg.transformation.computeagent.Constrainter;
 import com.sg.transformation.computeagent.KeepConstrainter;
+import com.sg.transformation.computeagent.Regulariser;
+import com.sg.transformation.computeagent.UserIntentionReasoning;
 import com.sg.transformation.recognizer.Recognizer;
-import com.sg.transformation.recognizer.Regulariser;
 import com.sg.transformation.renderfactory.GraphFactory;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.Button;
-import android.widget.PopupWindow;
 
 public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		Runnable {
@@ -81,10 +80,11 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
     private FileService fileServicer;
     
     private KeepConstrainter keepConstrainter; //约束保持求解器
+    
+    private UserIntentionReasoning userIntentionReasoning; //用户意图推测器
 
 	//2012-8-26 onion
     private Magnifier magnifier;
-	private PopUpWindow popUpWindow;
 	
 	public MainView(Context context) {
 		super(context);
@@ -114,6 +114,8 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		
 		keepConstrainter = KeepConstrainter.getInstance();
 		
+		userIntentionReasoning = new UserIntentionReasoning(context, regulariser, constrainter, keepConstrainter, URSolver);
+		
 		color = Color.BLACK; // 画笔颜色
 		width = 3; // 画笔宽度
 		//graphControl = new GraphControl(graphList, color, width);
@@ -124,7 +126,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 
 		//2012-8-26 onion
 		magnifier = new Magnifier();
-		popUpWindow = new PopUpWindow(context, regulariser);
+		
 	}
 	
 	
@@ -140,7 +142,8 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		new Thread(this).start();
 
 		//2012-8-26 onion
-		magnifier.Init(this.getWidth(), this.getHeight());
+		CommonFunc.setDriverBound(this.getWidth(), this.getHeight());
+		magnifier.Init();
 	}
 
 	@Override
@@ -277,7 +280,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		if(isEidt  && curGraph != null && !isDoubleTouch){  //编辑态
 			switch (action) {
 			case MotionEvent.ACTION_DOWN:
-				popUpWindow.dismiss();
+				userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 				checkedGraph = curGraph;
 				isChecked = isEidt;
 				URSolver.RedoStackClear(); // 清空redo栈
@@ -287,6 +290,8 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 					//如果点位置在图形上,选中图元
 					for(GUnit unit : curGraph.getGraph()){
 						if(unit instanceof PointUnit){
+							if(((PointUnit)unit).isInLine() && !((PointUnit)unit).isCommonConstrainted())
+								continue;
 							if(unit.isInUnit(first)){
 								curUnit = unit;
 								break;
@@ -294,9 +299,18 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 						}
 					}
 				}else{
+					for(GUnit unit : curGraph.getGraph()) {
+						//点在圆内 则两点手势时放大缩小，旋转以该图形中心做为中心
+						if(unit instanceof CurveUnit) {
+							Log.v("点在圆内 ", "点在圆内 ");
+							if(((CurveUnit)unit).isInCircle(first)) {
+								Log.v("点在圆内 ", "点在圆内 ");
+								centerCurve = (CurveUnit) unit;
+							}
+						}
+					}
 					isEidt = false;  //如果点位置不在图形上 退出编辑态
 					curGraph = new Sketch(touchX, touchY);
-					//popUpWindow.dismiss();
 				}
 				collector.start(); // 启动收集器
 				collector.collect(touchX, touchY);
@@ -308,8 +322,19 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 				//平移
 				float[][] transMatrix = {{1, 0, touchX - pointList.get(num - 2).getX()}, {0, 1, touchY - pointList.get(num - 2).getY()}, {0, 0, 1}};
 				if(curUnit != null){
-					//拖拽点
-					((PointUnit)curUnit).translate(curUnit, transMatrix);
+					//拖拽在直线上的点
+					if(((PointUnit)curUnit).isInLine()) {
+						//如果是一般约束点 则拖动
+						//if(((PointUnit)curUnit).isCommonConstrainted()) {
+							LineStrategy.translatePointInLine(curUnit, curGraph, new Point(touchX, touchY));
+						//} else {
+							
+						//}
+					} else {
+						curGraph.setEqualAngleToF();
+						curGraph.setRightAngleToF();
+						curUnit.translate(transMatrix);
+					}
 					Log.v("拖拽点", "拖拽点");
 				}else{
 					curGraph.translate(curGraph, transMatrix);
@@ -319,10 +344,20 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 				Log.v("translate", (touchX - pointList.get(num - 2).getX()) + ", " + (touchY - pointList.get(num - 2).getY()));
 				break;
 			case MotionEvent.ACTION_UP:
+				centerCurve = null;
 				Log.v("onUp", touchX + ", " + touchY);
+				//只有拖动顶点才重新进行图形规整,拖动直线上的点重新识别约束
+				if(curUnit != null) {
+					if(!((PointUnit)curUnit).isInLine()) {
+						curGraph = regulariser.regularise(graphList, curGraph);  //图形规整
+					} else {
+						if(((PointUnit)curUnit).isCommonConstrainted()) {
+							curGraph = keepConstrainter.rebuildGraph(curGraph);
+						}
+					}
+				}
 				curUnit = null;
-				curGraph = regulariser.regularise(graphList, curGraph);  //图形规整
-				if(constrainter.constraint(graphList, curGraph)){   //动态约束
+				if(constrainter.constraint(graphList, curGraph) != null){   //动态约束
 					curGraph = null;
 					checkedGraph = null;
 					isEidt = false;
@@ -342,6 +377,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		}else{  //识别态
 			switch (action) {
 			case MotionEvent.ACTION_DOWN:
+				userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 				URSolver.RedoStackClear(); // 清空redo栈
 				downTime = new Date().getTime();
 				collector.start(); // 启动收集器
@@ -356,6 +392,8 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 					event2Points.clear();
 					collector.release();
 					curGraph = null;
+					isRotate = true;
+					isScale = true;
 					//isDoubleTouch = false;
 				}
 				collector.collect(touchX, touchY); // 收集点
@@ -364,21 +402,26 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 				}
 				break;
 			case MotionEvent.ACTION_UP:
+				centerCurve = null;
 				//处理两点手势 弹起
 				if(isDoubleTouch){
+					isRotate = true;
+					isScale = true;
 					event1Points.clear();
 					event2Points.clear();
 					collector.release();
 					Log.v("两点手势", "两点手势");
 					isDoubleTouch = false;
-					isEidt = true;
-					isChecked = true;
-					curGraph = checkedGraph;
-					if(constrainter.constraint(graphList, curGraph)){   //动态约束
-						curGraph = null;
-						checkedGraph = null;
-						isEidt = false;
-						isChecked = false;
+					if(isChecked){
+						isEidt = true;
+						isChecked = true;
+						curGraph = checkedGraph;
+						if(constrainter.constraint(graphList, curGraph) != null){   //动态约束
+							curGraph = null;
+							checkedGraph = null;
+							isEidt = false;
+							isChecked = false;
+						}
 					}
 					//URSolver.EnUndoStack(new UndoRedoStruct(OperationType.CHANGE, checkedGraph.clone())); //改变图形，undo栈添加
 					break;
@@ -389,7 +432,6 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 				//选中图形
 				if (upTime - downTime > ThresholdProperty.PRESS_TIME_SHORT
 						&& penInfo.isFixedPoint(pointList)) { // 选中对象
-				
 					Graph graph = graphFactory.getCheckedGraph(graphList, new PointUnit(pointList).getPoint());
 					if (graph != null && graph != checkedGraph) {
 						graph.setChecked(true); // 选中图形
@@ -405,7 +447,8 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 						collector.release(); // 释放收集器
 						URSolver.EnUndoStack(new UndoRedoStruct(OperationType.CHANGE, curGraph.clone())); //改变图形，undo栈添加
 						URSolver.RedoStackClear(); //清空redo
-						popUpWindow.showPop(this, curGraph, touchX, touchY);
+						//选中图形后显示用户意图推测
+						userIntentionReasoning.regulariseReasoning(this, graph, touchX, touchY);
 						break;
 					}
 				}
@@ -444,7 +487,13 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 				}
 				curGraph = regulariser.regularise(graphList, curGraph);  //图形规整
 				//图形约束
-				constrainter.constraint(graphList, curGraph); // 对新构造的图形进一步约束识别
+				curGraph = constrainter.constraint(graphList, curGraph);  // 对新构造的图形进一步约束识别
+				if(curGraph != null) { //有约束
+					if(curGraph instanceof TriangleGraph && curGraph.getConstraint()) {
+						//约束线用户意图推测
+						userIntentionReasoning.constraintReasoning(this,curGraph, touchX, touchY);
+					}
+				}
 				URSolver.RedoStackClear(); //清空redo
 				curGraph = null;
 				checkedGraph = null;
@@ -543,12 +592,17 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 	//private boolean isTouchUp = true;
 	//private int a = 0, b = 1;
 
+	//cwq
+	private CurveUnit centerCurve = null;
+	private boolean isRotate = true, isScale = true;
 	/*
 	 * 双点触摸， 缩放手势，旋转手势，删除手势，还未完成，暂时不用去管
 	 */
 	private void doubleTouch(MotionEvent event) {
+		isDoubleTouch = true;
 		if(isChecked){
-			isDoubleTouch = true;
+			isEidt = false;
+			//isDoubleTouch = true;
 			/*
 			//规整输入，以靠近坐标原点的为first点，反之则为second点
 			if(isTouchUp){
@@ -573,6 +627,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 			//Log.v("1,2",firstX+","+firstY+"   "+secondX+","+secondY);
 			switch (action) {
 				case MotionEvent.ACTION_DOWN:
+					userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 					collector.release();
 					break;
 				case MotionEvent.ACTION_MOVE:
@@ -590,36 +645,38 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 									event2Points.get(0));
 							isNarrowOrEnlarge = CommonFunc.NarrowOrEnlarge(event1Points.get(0), event2Points.get(0), event1Points.get(SAMPLE_COUNT - 1), event2Points.get(SAMPLE_COUNT - 1));
 							int type = VectorFunc.translation(baseVector, vector1, vector2);		
-							if (type == 1) {
+							if (type == 1 && isScale) {
+								isRotate = false;
 								if(isNarrowOrEnlarge){
 									float[][] transMatrixscalenarrow = {{(float) 0.9, 0, 0}, 
 																		{0, (float) 0.9, 0}, 
 																		{0, 0, 1}}; //缩小矩阵
-									checkedGraph.scale(checkedGraph, transMatrixscalenarrow);
+									checkedGraph.scale(checkedGraph, transMatrixscalenarrow, centerCurve);
 								}else{
 									float[][] transMatrixscaleenlarge = {{(float) 1.13, 0, 0}, 
 																		  {0, (float) 1.13, 0}, 
 																		  {0, 0, 1}};	//放大矩阵
-									checkedGraph.scale(checkedGraph, transMatrixscaleenlarge);
+									checkedGraph.scale(checkedGraph, transMatrixscaleenlarge, centerCurve);
 								}
 									
 								Log.v("translate", "scale");
-							} else if (type == 2) {
+							} else if (type == 2 && isRotate) {
+								isScale = false;
 								cosA = (float) CommonFunc.rotatecos(baseVector, vector1, vector2);
 								sinA = (float) Math.sqrt(1-cosA*cosA);
 								isclockwise = CommonFunc.isClockWise(baseVector, vector1, vector2);
-								if(isclockwise){
+								if(!isclockwise){
 									float[][] rotateMatrix = {{cosA, -sinA, 0}, 
 															   {sinA, cosA, 0}, 
-															   {0, 0, 1}};	 //顺时针旋转矩阵
-									checkedGraph.rotate(checkedGraph, rotateMatrix);
-									Log.v("translate", "wiserotate");
+															   {0, 0, 1}};	 //逆时针旋转矩阵
+									checkedGraph.rotate(checkedGraph, rotateMatrix, centerCurve);
+									Log.v("translate", "alongrotate");
 								}else{
 									float[][] rotateMatrix = {{cosA, sinA, 0}, 
 															   {-sinA, cosA, 0}, 
-															   {0, 0, 1}};	//逆时针旋转矩阵
-									checkedGraph.rotate(checkedGraph, rotateMatrix);
-									Log.v("translate", "alongrotate");
+															   {0, 0, 1}};	//顺时针旋转矩阵
+									checkedGraph.rotate(checkedGraph, rotateMatrix, centerCurve);
+									Log.v("translate", "wiserrotate");
 								}
 							} else {
 								Log.v("translate", "null");
@@ -636,6 +693,9 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 					event1Points.clear();
 					event2Points.clear();
 					collector.release();
+					centerCurve = null;
+					isRotate = true;
+					isScale = true;
 //					isTouchUp = true;
 					break;
 				default:
@@ -646,6 +706,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 
 	//功能
     public void clear(){
+    	userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
     	isEidt = false;
     	isChecked = false;
     	curGraph = null;
@@ -657,6 +718,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
     }
     
 	public void Undo() {
+		userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 		curGraph = null;
 		if(URSolver.isUndoStackEmpty()) {
 			Log.v("Undo", "empty");
@@ -779,6 +841,7 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 			Log.v("Redo", "empty");	
 			return;	
 		}
+		userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 		UndoRedoStruct temp;
 		temp = URSolver.popRedoStack();
 		Graph tempGraph;
@@ -866,13 +929,15 @@ public class MainView extends SurfaceView implements SurfaceHolder.Callback,
 		}
 	}
 	
-	void save(String name){
+	public void save(String name){
+		userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 		fileServicer.save(graphList, name);
 	}
 	
-	void open(String path){
+	public void open(String path){
 		Object temp = fileServicer.read(path);
 		if(temp != null){
+			userIntentionReasoning.dismiss(); //如果没点选图标，则popupwindow消失
 			graphList = (List<Graph>)temp;
 			URSolver.RedoStackClear();  //清空reod undo栈
 	    	URSolver.UndoStackClear();

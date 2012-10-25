@@ -3,7 +3,10 @@
  * */
 package com.sg.logic.strategy;
 
+import com.sg.object.Point;
 import com.sg.object.graph.Graph;
+import com.sg.object.unit.CurveUnit;
+import com.sg.object.unit.PointUnit;
 
 public interface TranslationStratery {
 	
@@ -15,10 +18,10 @@ public interface TranslationStratery {
 	/*
 	 * 伸缩
 	 * */
-	public void scale(Graph graph, float[][] scaleMatrix);
+	public void scale(Graph graph, float[][] scaleMatrix, CurveUnit centerCurve);
 	
 	/*
 	 * 旋转
 	 * */
-	public void rotate(Graph graph, float[][] rotateMatrix);
+	public void rotate(Graph graph, float[][] rotateMatrix, CurveUnit centerCurve);
 }

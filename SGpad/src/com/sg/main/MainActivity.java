@@ -5,41 +5,27 @@ import com.sg.property.common.ThresholdProperty;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-
-import android.view.ContextMenu;
-import android.view.Gravity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-
-
 import android.view.Window;
 import android.view.WindowManager;
-
 import android.widget.EditText;
-import android.widget.PopupWindow;
-import android.widget.TextView;
-
 import android.widget.TableLayout;
 
 public class MainActivity extends Activity {
     /** Called when the activity is first created. */
-	////////////
-	final int MENU1 = 0x111;
-	final int MENU2 = 0x112;
-	final int MENU3 = 0x113;
-	private TextView txt;
-	//////////////
+	
 	private MainView mainView;
-
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +35,7 @@ public class MainActivity extends Activity {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);  //设置背光灯长亮
 		initConfig(this);
 		mainView = new MainView(this);
-		setContentView(mainView);
+        setContentView(mainView);
         //读取关联文件
         Intent intent = getIntent(); 
         String action = intent.getAction(); 
@@ -58,7 +44,6 @@ public class MainActivity extends Activity {
         	String path = uri.getPath();
         	mainView.open(path);
         } 
-
     }
 
     @Override
@@ -155,7 +140,9 @@ public class MainActivity extends Activity {
         			
         		}
         	});
-        	builder.create().show();
+        	AlertDialog dialog = builder.create();
+        	dialog.setCanceledOnTouchOutside(true);
+        	dialog.show();
         	return true;
         }else{
         	return super.onKeyDown(keyCode, event);
@@ -183,7 +170,6 @@ public class MainActivity extends Activity {
     	builder.create().show();
     }
     
-   
     /*
     private void open(){
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -205,7 +191,5 @@ public class MainActivity extends Activity {
     	});
     	builder.create().show();
     }
-    
-   
- */
+    */
 }

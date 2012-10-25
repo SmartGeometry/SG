@@ -50,7 +50,7 @@ public abstract class Graph implements Cloneable, Serializable {
 	
 	protected TranslationStratery translationStratery;      //在具体类中实例化
 
-	protected boolean isGraphConstrainted;  //闭合图形是否与直线有约束
+	protected boolean isGraphConstrainted;  //线性闭合图形是否与直线有约束
 	
 	public Graph() {
 		id = new Date().getTime();
@@ -67,7 +67,9 @@ public abstract class Graph implements Cloneable, Serializable {
 		for(int num = 0; num < size; num++) {
 			GUnit unit = graph.get(num);
 			if(unit instanceof PointUnit){
-				points.add((PointUnit) unit);
+				if(!((PointUnit) unit).isInLine()) {
+					points.add((PointUnit) unit);
+				}
 			}
 			unit.draw(canvas, painter);
 		}
@@ -225,21 +227,27 @@ public abstract class Graph implements Cloneable, Serializable {
 	 * 平移，通过平移矩阵，对图形中的各个图元进行变换，图元的变换：对关键的平移
 	 * */
 	public void translate(Graph graph, float[][] transMatrix) {
+		if(graph instanceof Sketch)
+			return;
 		translationStratery.translate(graph, transMatrix);
 	} 
 	
 	/*
 	 * 伸缩，通过伸缩矩阵操作
 	 * */
-	public void scale(Graph graph, float[][] scaleMatrix) {;
-		translationStratery.scale(graph, scaleMatrix);
+	public void scale(Graph graph, float[][] scaleMatrix, CurveUnit centerCurve) {
+		if(graph instanceof Sketch)
+			return;
+		translationStratery.scale(graph, scaleMatrix, centerCurve);
 	}
 	
 	/*
 	 * 旋转，通过旋转矩阵计算操作
 	 * */
-	public void rotate(Graph graph, float[][] rotateMatrix) {
-		translationStratery.rotate(graph, rotateMatrix);
+	public void rotate(Graph graph, float[][] rotateMatrix, CurveUnit centerCurve) {
+		if(graph instanceof Sketch)
+			return;
+		translationStratery.rotate(graph, rotateMatrix, centerCurve);
 	}
 	
 	/*

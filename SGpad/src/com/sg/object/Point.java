@@ -7,7 +7,9 @@ package com.sg.object;
 import java.io.Serializable;
 import java.util.Date;
 
-public class Point implements Serializable{
+import com.sg.object.unit.GUnit;
+
+public class Point implements Cloneable, Serializable{
 
 	private float x;             //x坐标
 	private float y;			 //y坐标
@@ -40,7 +42,7 @@ public class Point implements Serializable{
 		return x;
 	}
 
-	public void setX(int x) {
+	public void setX(float x) {
 		this.x = x;
 	}
 
@@ -48,7 +50,7 @@ public class Point implements Serializable{
 		return y;
 	}
 
-	public void setY(int y) {
+	public void setY(float y) {
 		this.y = y;
 	}
 
@@ -96,6 +98,17 @@ public class Point implements Serializable{
 	 * */
 	public void increaseTotal(int increaseNum) {
 		this.total += increaseNum;
+	}
+	
+	public Point clone(){
+		Point temp = null;  
+        try {
+			temp = (Point) super.clone();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
+        return temp; 
 	}
 
 }

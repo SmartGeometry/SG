@@ -12,7 +12,7 @@
 	/>
 <!-- 定义一个TextView，用于作为列表项的一部分。 -->
 <TextView android:id="@+id/file_name"
-	android:layout_width="2000dp" 
+	android:layout_width="fill_parent" 
 	android:layout_height="wrap_content"
 	android:textSize="16dp"
 	android:gravity="center_vertical"

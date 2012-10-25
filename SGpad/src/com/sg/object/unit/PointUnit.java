@@ -6,6 +6,7 @@ import com.sg.logic.common.CommonFunc;
 import com.sg.logic.strategy.LineStrategy;
 import com.sg.logic.strategy.TranslationStratery;
 import com.sg.object.Point;
+import com.sg.object.graph.Graph;
 import com.sg.property.common.ThresholdProperty;
 import com.sg.property.tools.Painter;
 
@@ -16,6 +17,9 @@ public class PointUnit extends GUnit {
 //	private Point point;
 	private float x;
 	private float y;
+	private boolean isInLine; //点是否在直线上
+	private boolean isCommonConstrainted; //是否是一般约束点
+	private int mark;
 	
 	/*
 	 * 约束度，比如一根直线的点元约束度是1
@@ -38,6 +42,8 @@ public class PointUnit extends GUnit {
 		this.y = 0;
 		isRightAngle = false;
 		isEqualAngle = false;
+		isInLine = false;
+		isCommonConstrainted = false;
 	}
 	
 	public PointUnit(float x, float y) {
@@ -47,6 +53,8 @@ public class PointUnit extends GUnit {
 		this.y = y;
 		isRightAngle = false;
 		isEqualAngle = false;
+		isInLine = false;
+		isCommonConstrainted = false;
 	}
 	
 	public PointUnit(Point point) {
@@ -56,6 +64,8 @@ public class PointUnit extends GUnit {
 		this.y = point.getY();
 		isRightAngle = false;
 		isEqualAngle = false;
+		isInLine = false;
+		isCommonConstrainted = false;
 	}
 	
 	public PointUnit(List<Point> pList) {
@@ -66,6 +76,8 @@ public class PointUnit extends GUnit {
 		this.y = (pList.get(0).getY() + pList.get(n-1).getY()) / 2;
 		isRightAngle = false;
 		isEqualAngle = false;
+		isInLine = false;
+		isCommonConstrainted = false;
 	}
 
 	@Override
@@ -78,6 +90,7 @@ public class PointUnit extends GUnit {
 	 * */
 	@Override
 	public boolean judge(List<Point> pList) {
+		/*
 		int n = pList.size();
 		if(n == 0) {
 			return false;
@@ -89,6 +102,19 @@ public class PointUnit extends GUnit {
 			return true;
 		}
 		return false;
+		*/
+		//2012-9-23  cai  原方法识别有问题
+		int n = pList.size();
+		Point cPoint = pList.get(n/2);
+		
+		int count = 0;     //在圆外的点数量
+		for(Point point : pList) {
+			if(CommonFunc.distance(cPoint, point) > ThresholdProperty.POINT_DISTANCE) {
+				count++;
+			}
+		}
+		
+		return (5*count > n) ? false : true;   //圆外的点超过五分之一则不是点
 	}
 	
 	public Point getPoint() {
@@ -152,10 +178,6 @@ public class PointUnit extends GUnit {
 			return false;
 		}
 	}
-	
-	public void translate(GUnit unit, float[][] transMatrix) {
-		LineStrategy.translatePoint(unit, transMatrix);
-	}
 
 	public boolean isRightAngle() {
 		return isRightAngle;
@@ -171,6 +193,55 @@ public class PointUnit extends GUnit {
 
 	public void setEqualAngle(boolean isEqualAngle) {
 		this.isEqualAngle = isEqualAngle;
+	}
+
+	public boolean isInLine() {
+		return isInLine;
+	}
+
+	public void setInLine(boolean isInLine) {
+		this.isInLine = isInLine;
+	}
+
+	public int getMark() {
+		return mark;
+	}
+
+	public void setMark(int mark) {
+		this.mark = mark;
+	}
+
+	public boolean isCommonConstrainted() {
+		return isCommonConstrainted;
+	}
+
+	public void setCommonConstrainted(boolean isCommonConstrainted) {
+		this.isCommonConstrainted = isCommonConstrainted;
+	}
+
+	@Override
+	public void translate(float[][] transMatrix) {
+		// TODO Auto-generated method stub
+		x += transMatrix[0][2];
+		y += transMatrix[1][2];
+	}
+
+	@Override
+	public void scale(float[][] scaleMatrix, Point translationCenter) {
+		// TODO Auto-generated method stub
+		float x0 = translationCenter.getX(), y0 = translationCenter.getY(); 
+		x = (x - x0) * scaleMatrix[0][0] + x0;
+		y = (y - y0) * scaleMatrix[1][1] + y0;
+	}
+
+	@Override
+	public void rotate(float[][] rotateMatrix, Point translationCenter) {
+		// TODO Auto-generated method stub
+		float x0 = translationCenter.getX(), y0 = translationCenter.getY();
+		float tempX = x - x0;
+		float tempY = y - y0;
+		x = (tempX * rotateMatrix[0][0] + tempY * rotateMatrix[0][1]) + x0;
+		y = (tempX * rotateMatrix[1][0] + tempY * rotateMatrix[1][1]) + y0;
 	} 
 	
 	
