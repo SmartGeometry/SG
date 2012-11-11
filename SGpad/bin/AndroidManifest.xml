@@ -4,11 +4,7 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
-<<<<<<< HEAD
     <uses-sdk android:minSdkVersion="3" />
-=======
-    <uses-sdk android:minSdkVersion="10" />
->>>>>>> 6b2cc19dd2b5dbb813a83dbcce80ed911b60da12
     
     <!-- 在SDCard中创建与删除文件权限 -->
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
